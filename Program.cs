@@ -22,6 +22,12 @@ namespace semLinqTask
             //1. Сколько записей за каждый из годов имеется в датасете.
             //Потом будут еще запросы
 
+
+            //-1. Вывести количество зафиксированных природных явлений в Америке в 2018 году
+            //0.Вывести количество штатов, количество городов в датасете
+            //1.Вывести топ 3 самых дождливых города в 2019 году в порядке убывания количества дождей(вывести город и количество дождей)
+            //2.Вывести данные самых долгих(топ - 1) снегопадов в Америке по годам(за каждый из годов) - с какого времени, по какое время, в каком городе
+
             List<WeatherEvent> weList = new List<WeatherEvent>();
 
             try
@@ -33,7 +39,11 @@ namespace semLinqTask
                     string line = sr.ReadLine();
                     // Read and display lines from the file until the end of
                     // the file is reached.
-                    while ((line = sr.ReadLine()) != null)
+
+
+                    // См ласт строчку цикла
+                    var i = 0;
+                    while (((line = sr.ReadLine()) != null) && (i < 300000))
                     {
                         var dataList = line.Split(',').ToList();
                         weList.Add(new WeatherEvent()
@@ -51,6 +61,7 @@ namespace semLinqTask
                             Country = dataList[10],
                             ZipCode = dataList[11]
                         });
+                        // i++;
                     }
                 }
             }
@@ -65,6 +76,7 @@ namespace semLinqTask
                 .Select(x => x.City)
                 .Distinct().ToList();
 
+
             //0. Linq - сколько различных городов есть в датасете.
             Console.WriteLine("Сколько различных городов есть в датасете.");
             Console.WriteLine(cityList.Count());
@@ -72,8 +84,35 @@ namespace semLinqTask
             //1. Сколько записей за каждый из годов имеется в датасете.
             Console.WriteLine("Сколько записей за каждый из годов имеется в датасете.");
             cityList.ForEach(x =>
-                Console.WriteLine(weList.Where(y => y.City == x).Count())
+                Console.WriteLine($"{x} - {weList.Where(y => y.City == x).Count()}")
             );
+
+
+            Console.WriteLine("Вывести количество зафиксированных природных явлений в Америке в 2018 году");
+            Console.WriteLine(weList.Where(x => x.TimeZone.StartsWith("US") && x.StartTime.Year == 2018).Select(x => x.Type).Distinct().Count());
+
+            Console.WriteLine("Вывести количество штатов, количество городов в датасете");
+            Console.WriteLine(weList.Select(x => x.ZipCode).Distinct().Count());
+            Console.WriteLine(cityList.Count());
+
+            Console.WriteLine("Вывести топ 3 самых дождливых города в 2019 году в порядке убывания количества дождей(вывести город и количество дождей)");
+            var t = weList.Where(x => (x.StartTime.Year == 2019) && (x.Type == WeatherEventType.Rain)).Select(x => x.City).ToList();
+            t.Distinct()
+                .OrderBy(x => -t.Where(y => y == x).Count())
+                .Take(3).ToList()
+                .ForEach(x => Console.WriteLine($"{x} - {t.Where(y => y == x).Count()}"));
+            Console.WriteLine("Вывести данные самых долгих(топ - 1) снегопадов в Америке по годам(за каждый из годов) - с какого времени, по какое время, в каком городе");
+            var d = weList.Where(x => x.Type == WeatherEventType.Snow)
+                .OrderBy(x => -(x.EndTime - x.StartTime))
+                .ToList();
+
+            Enumerable.Range(2016, 2020).ToList().ForEach(x =>
+            {
+                d.Where(y => y.StartTime.Year == x)
+                    .Take(1).ToList()
+                    .ForEach(m => Console.WriteLine($"{x} | {m.City}: {m.StartTime} - {m.EndTime}"));
+            });
+
         }
     }
 
